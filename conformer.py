@@ -156,7 +156,7 @@ class MultiHeadAttention(nn.Module):
       query = self.query_rotary_pe(query) # [b, n_head, t, c // n_head]
       key = self.key_rotary_pe(key)
 
-      output = F.scaled_dot_product_attention(query, key, value, attn_mask=mask, dropout_p=self.p_dropout)
+      output = F.scaled_dot_product_attention(query, key, value, attn_mask=mask, dropout_p=self.p_dropout if self.training else 0)
       output = output.transpose(2, 3).contiguous().view(b, d, t_t)  # [b, n_h, t_t, d_k] -> [b, d, t_t]
       return output
     
