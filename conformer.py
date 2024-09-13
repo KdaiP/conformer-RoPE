@@ -22,13 +22,7 @@ class PreNorm(nn.Module):
         return self.fn(x, **kwargs)
 
 class ConformerConvModule(nn.Module):
-    def __init__(
-        self,
-        dim,
-        expansion_factor = 2,
-        kernel_size = 31,
-        dropout = 0.
-    ):
+    def __init__(self, dim, expansion_factor = 2, kernel_size = 31, dropout = 0.):
         super().__init__()
 
         inner_dim = dim * expansion_factor
@@ -76,14 +70,18 @@ class ConformerBlock(nn.Module):
 
     def forward(self, x, x_mask=None):
         if x_mask is None:
-            x_mask = torch.ones((x.size(0), 1, x.size(2)), device=x.device) # [b, 1, t]
-        attn_mask = x_mask.unsqueeze(2) * x_mask.unsqueeze(-1)
+            x_mask = torch.ones((x.size(0), 1, x.size(2)), device=x.device, dtype=x.dtype) # [b, 1, t]
+            attn_mask = None
+        else:
+            attn_mask = x_mask.unsqueeze(2) * x_mask.unsqueeze(-1)
+            attn_mask = torch.zeros_like(attn_mask).masked_fill(attn_mask == 0, -torch.finfo(x.dtype).max)
+
         x = self.ff1(x, x_mask=x_mask) + x
         x = self.attn(x, c=x, attn_mask=attn_mask) + x
         x = self.conv(x) + x
         x = self.ff2(x, x_mask=x_mask) + x
         x = self.post_norm(x.transpose(1,2)).transpose(1,2)
-        return x
+        return x * x_mask
 
 # Conformer
 

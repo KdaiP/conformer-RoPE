@@ -28,6 +28,10 @@ model = Conformer(n_layers=3,
                   n_heads=2, 
                   kernel_size=3)
 
+# input tensor
 x = torch.randn([32, 192, 35]) # input shape: [batch_size, hidden_channels, time]
-model(x) # (32, 192, 35)
+
+# a float mask for the input tensor, where zero indicates padding
+x_mask = torch.ones([32, 1, 35]) # input shape: [batch_size, 1, time]
+model(x, x_mask) # (32, 192, 35)
 ```
